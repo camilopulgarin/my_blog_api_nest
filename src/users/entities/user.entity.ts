@@ -1,4 +1,5 @@
 import {
+  BeforeInsert,
   Column,
   CreateDateColumn,
   Entity,
@@ -10,6 +11,8 @@ import {
 } from 'typeorm';
 import { Profile } from './profile.entity';
 import { Post } from '../../posts/entities/post.entity';
+import * as bcrypt from 'bcrypt';
+import { Exclude } from 'class-transformer';
 
 @Entity({
   name: 'users',
@@ -18,6 +21,7 @@ export class User {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Exclude()
   @Column({ type: 'varchar', length: 100, unique: true })
   email: string;
 
@@ -44,4 +48,9 @@ export class User {
 
   @OneToMany(() => Post, (post) => post.user)
   posts: Post[];
+
+  @BeforeInsert()
+  async hashPassword() {
+    this.password = await bcrypt.hash(this.password, 10);
+  }
 }
