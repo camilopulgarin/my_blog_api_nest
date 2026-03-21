@@ -21,10 +21,10 @@ export class User {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Exclude()
   @Column({ type: 'varchar', length: 100, unique: true })
   email: string;
 
+  @Exclude()
   @Column({ type: 'varchar', length: 100 })
   password: string;
 
