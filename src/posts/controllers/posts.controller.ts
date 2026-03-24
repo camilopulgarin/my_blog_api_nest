@@ -16,11 +16,14 @@ import { UpdatePostDto } from '../dto/update-post.dto';
 import { AuthGuard } from '@nestjs/passport';
 import type { Request } from 'express';
 import { Payload } from '../../auth/models/payload.model';
+import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { Post as PostEntity } from '../entities/post.entity';
 
 @Controller('posts')
 export class PostsController {
   constructor(private readonly postsService: PostsService) {}
 
+  @ApiOperation({ summary: 'Create a new post' })
   @UseGuards(AuthGuard('jwt'))
   @Post()
   create(@Body() createPostDto: CreatePostDto, @Req() req: Request) {
@@ -29,6 +32,12 @@ export class PostsController {
     return this.postsService.create(createPostDto, userId);
   }
 
+  @ApiOperation({ summary: 'Get all posts' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of posts',
+    type: [PostEntity],
+  })
   @Get()
   findAll() {
     return this.postsService.findAll();
