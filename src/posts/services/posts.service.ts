@@ -2,25 +2,28 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreatePostDto } from '../dto/create-post.dto';
 import { UpdatePostDto } from '../dto/update-post.dto';
 import { Post } from '../entities/post.entity';
+import { OpenaiService } from '../../ai/services/openai.service';
 
 @Injectable()
 export class PostsService {
   constructor(
     @InjectRepository(Post)
     private postsRepository: Repository<Post>,
+    private openaiService: OpenaiService,
   ) {}
 
-  async create(createPostDto: CreatePostDto) {
+  async create(createPostDto: CreatePostDto, userId: number) {
     try {
       const newPost = this.postsRepository.create({
         ...createPostDto,
-        user: { id: createPostDto.userId },
+        user: { id: userId },
         categories: createPostDto.categoryIds
           ? createPostDto.categoryIds.map((id) => ({ id }))
           : [],
@@ -74,5 +77,33 @@ export class PostsService {
       relations: ['user.profile'],
     });
     return post;
+  }
+
+  async publish(id: number, userId: number) {
+    try {
+      const post = await this.findOne(id);
+      if (post.user.id !== userId) {
+        throw new ForbiddenException(
+          'You are not allowed to publish this post',
+        );
+      }
+      if (!post.content || !post.title || post.categories.length === 0) {
+        throw new BadRequestException(
+          'Post must have content, title, and at least one category before publishing',
+        );
+      }
+      const summary = await this.openaiService.generateSummary(post.content);
+      const image = await this.openaiService.generateImage(summary);
+      const publishedPost = this.postsRepository.merge(post, {
+        isDraft: false,
+        summary,
+        coverImage: image,
+      });
+      const updatedPost = await this.postsRepository.save(publishedPost);
+      return updatedPost;
+    } catch (error: any) {
+      console.log('Error publishing post:', error);
+      throw new BadRequestException('Error publishing post');
+    }
   }
 }

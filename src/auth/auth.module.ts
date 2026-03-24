@@ -7,6 +7,7 @@ import { AuthController } from './controllers/auth.controller';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { Env } from '../env.model';
+import { JwtStrategy } from './strategies/jwt.strategy';
 
 @Module({
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -22,7 +23,7 @@ import { Env } from '../env.model';
       }),
     }),
   ],
-  providers: [AuthService, LocalStrategy],
+  providers: [AuthService, LocalStrategy, JwtStrategy],
   controllers: [AuthController],
 })
 export class AuthModule {}

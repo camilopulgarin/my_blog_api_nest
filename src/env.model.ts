@@ -6,4 +6,5 @@ export interface Env {
   POSTGRES_PASSWORD: string;
   POSTGRES_DB: string;
   JWT_SECRET: string;
+  OPENAI_API_KEY: string;
 }
